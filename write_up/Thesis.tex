@@ -1,0 +1,205 @@
+\documentclass[12pt]{report}      % Document type declaration.
+\sloppy                           % LaTeX becomes less strict with formatting
+
+%------------Packages-------------%
+\usepackage[usenames,dvipsnames,svgnames,table,x11names,hyperref]{xcolor}
+\usepackage{lmodern}
+\usepackage{graphicx}             % Images
+\usepackage{color}                % Colour
+\usepackage{fontspec}
+\usepackage[colorlinks=true,      % Hyperlinks
+            pdfstartview=FitV,
+            linkcolor=blue,
+            citecolor=blue,
+            urlcolor=blue,
+            hyperfootnotes=true
+            ]{hyperref}
+\usepackage[version=3]{mhchem}     % Chemistry formulae and equations.
+\usepackage[comma,square,          % Citing style.
+           numbers,
+           sort&compress
+           ]{natbib} 
+\usepackage{bm,mathtools}  % Maths.
+\usepackage{amsfonts}              % Special fonts.
+\usepackage{amssymb}               % Symbols.
+\usepackage{paralist}              % In-paragraph lists.
+\usepackage[top=1in,               % Document's geometric specs
+		   bottom=1in,
+		   left=1.5in,
+		   right=1in
+		   ]{geometry}
+\usepackage{multirow}              % Multirow tables.
+\usepackage{chngcntr}
+\usepackage{subcaption}            % Subfigures.
+\usepackage[toc,page]{appendix}    % Appendix.
+\usepackage{minted}                % Displaying code colourfully.
+\usepackage{pdfpages}              % Includes pdf pages.
+\usepackage[section]{placeins}     % Place floats in the section they're called.
+\usepackage{verbatim}              % Comment out large sections of code.
+\usepackage{lscape}                % Use landscape pages.
+\usepackage{exscale}               % Scale mathematic notation appropriately.
+\usepackage{cleveref}              % Clever cross-references.
+%\allowdisplaybreaks               % Lets align go through page breaks.
+\newfontfamily\ubuntumono{Ubuntu Mono}
+
+\graphicspath{{../images/}}        % Image path.
+
+%---------Special options----------%
+%\counterwithout{figure}{chapter}   % No chapter number in figures.
+%\counterwithout{table}{chapter}    % No chapter number in tables.
+\setlength{\topskip}{0in}          % Top paragraph spacing.
+\setlength{\parskip}{2ex}          % Bottom paragraph spacing.
+\renewcommand{\baselinestretch}{1} % Line spacing.
+
+%-------User-define commands-------%
+\newcommand{\footref}[1]{\textsuperscript{\ref{#1}}}
+\newcommand{\chm}{\mathrm}
+\newcommand{\eqrx}{\rightleftharpoons}
+\newcommand{\rx}[1]{\stackrel{\!\!#1}{\rightarrow}}
+%\newcommand{\dpar}[3]{\left(\frac{\partial#1}{\partial#2}\right)\!\!\!\raisebox{-3ex}{\footnotesize\textit
+% #3}}	
+%\newcommand{\dpart}[3]{\left(\frac{\partial#1}{\partial#2}\right)_#3}
+\newcommand{\dif}[2]{\frac{\textrm{d} #1}{\textrm{d} #2}} % Total derivative
+\newcommand{\dpar}[2]{\frac{\partial #1}{\partial #2}}    % Partial derivative
+\newcommand{\dpara}[4]{\left(\frac{\partial #1}{\partial #2}+\frac{\partial #3}{\partial #4}\right)} % Partial derivatives addition
+\newcommand{\dpars}[4]{\left(\frac{\partial #1}{\partial #2}-\frac{\partial #3}{\partial #4}\right)} % Partial derivatives subtracion
+\newcommand{\nnum}{\nonumber\\} % Nonumber and skip line.
+\newcommand{\spth}{../scripts/} % Path for scripts.
+\newcommand{\cpth}{../code/}   % Path for codes.
+\newcommand{\sbs}{_\chm}
+\newcommand{\dbar}{\makebox[5pt]{}\makebox[0pt]{$^-$}\!\!\!d}\usepackage[toc,page]{appendix}
+\newcommand{\degree}{$^\circ$}
+\newcommand{\corr}[1]{\textcolor[named]{Red}{#1}}  % Red text.
+\renewcommand{\footnoterule}{                      % Footnote rule specs.
+  \kern -5.4pt
+  \hrule width \textwidth height 0.4pt
+  \kern 5pt
+}
+
+\makeatletter
+\newcommand*{\codefont}{\@setfontsize\codefont{8.1pt}{8.1pt}}  % Font size for code.
+\makeatother
+
+\newcommand{\roo}{$ R_{1\leftarrow1} $}
+\newcommand{\rto}{$ R_{2\leftarrow1} $}
+\newcommand{\too}{$ T_{1\leftarrow1} $}
+\newcommand{\tto}{$ T_{2\leftarrow1} $}
+\newcommand{\rot}{$ R_{1\leftarrow2} $}
+\newcommand{\rtt}{$ R_{2\leftarrow2} $}
+\newcommand{\tot}{$ T_{1\leftarrow2} $}
+\newcommand{\ttt}{$ T_{2\leftarrow2} $}
+
+\newcounter{originalpagenumber}                    % Page number for the bibliography after appendices.
+%-------------Document-------------%
+\begin{document}
+\setcounter{page}{1}
+\pagenumbering{roman}
+\thispagestyle{empty}
+%------------Front page------------%
+\begin{center}
+	\noindent INSTITUTO TECNOLÓGICO Y DE ESTUDIOS SUPERIORES\\
+	\noindent DE MONTERREY\\[0.75cm]
+	\noindent DEPARTMENT OF CHEMISTRY\\[0.8in]
+\end{center}
+\begin{figure}[h]
+	\centering
+	\includegraphics[height=5.5 cm]{tec.eps}
+	\vspace{0cm}
+\end{figure}
+\vspace{1cm}
+\begin{center}
+	\noindent INVESTIGATION OF MILLER'S QUASICLASSICAL NUCLEAR TRAJECTORY MODEL: ANALYSIS OF SOME SIMPLE MODEL SYSTEMS.\\
+	\noindent BY\\
+	\noindent DANIEL CELIS GARZA\\[1cm]
+	\small RESEARCH PROJECT PRESENTED AS PARTIAL REQUIREMENT FOR THE DEGREE OF BACHELOR OF SCIENCE IN CHEMISTRY\\
+	\vfill
+	\noindent MONTERREY, N.L. \hfill MAY 2015\\
+\end{center}
+\newpage
+%------------Signatures------------%
+\thispagestyle{empty}
+\begin{center}
+	\noindent INVESTIGATION OF MILLER'S QUASICLASSICAL NUCLEAR TRAJECTORY MODEL: ANALYSIS OF SOME SIMPLE MODEL SYSTEMS.\\[2cm]
+	\noindent BY\\
+	\noindent DANIEL CELIS GARZA\\[0.3cm]
+	\noindent \small HAS BEEN APPROVED\\
+	\noindent \small MAY 2015\\[0.3cm]
+\end{center}
+\begin{flushleft}
+	\noindent EVALUATING COMMITTEE:\\[0.3cm]
+\end{flushleft}
+\begin{center}
+	\begin{tabular}{c@{\hspace{0.5in}}c}
+		\rule[1pt]{2.3in}{1pt} & \rule[1pt]{2.3in}{1pt}\\
+		Dr.~John F. Stanton, Adviser & Dr.~Marcelo Videa Vargas, Adviser\\[1cm]
+		\rule[1pt]{2.3in}{1pt} & \rule[1pt]{2.3in}{1pt}\\
+		Dr.~Julio Leopoldo Palma Anda & Dr.~Julio César Gutiérrez Vega\\[1cm]
+	\end{tabular}
+\end{center}
+
+\noindent ACCEPTED:\\
+\begin{center}
+	\begin{tabular}{c}
+	\rule[1pt]{4 in}{1pt}\\
+	Dr.~Laura Eugenia Romero Robles\\
+	Head of the Bachelor's Degree in Chemistry\\[2cm]
+	\rule[1pt]{4 in}{1pt}\\
+	MSc.~Luz María Gutiérrez Maldonado\\
+	Head of the Department of Chemistry\\ 
+	\end{tabular}
+\end{center}
+\vfill
+%-------------Summary--------------%
+\include{sum}
+%----------Acknowledgements---------%
+\newpage
+\begin{center}
+	{\Large\bf{ACKNOWLEDGEMENTS}}
+\end{center}
+	\vspace{\fill}	
+	First, I would like to thank my academic mentors---who I have come to consider my friends. They have been many, their origins and locations span the globe and I cannot name them all, but there are a few who I would like to mention---as their influence on me, I consider the greatest. Starting with Prof. John F. Stanton, who after only two e-mails, told me he would like to be my adviser. If I had been in his position, I would've never risked it on so little information, but I'm glad he did\dots~because it was awesome. My academic adviser, Prof. Marcelo Videa Vargas, for allowing this to happen, and for all the advice and teachings over the years. I'd also like to thank Prof. Anatoly B. Kolomeisky and soon-to-be PhD. Hamid Teimouri for having accepted me as part of the team, as well as for all the help, guidance, advice and philosophical conversation during my 2014 summer internship at the Kolomeisky Group. There's also Prof. Víctor M. Jiménez Pérez, PhD. Concepción ``Conny'' García, PhD. Rodrigo Chan Navarro and Prof. Víctor M. Rosas García, who also welcomed me as part of the team, as well as helped, guided, and advised me during my 2013 summer internship at the Jiménez-Pérez Group. I'd also like to thank Prof. Bernard Micheli Masson, whose classes kept me studying chemistry. Mr. Casserly, whose secondary school chemistry class made me study chemistry, and for helping me develop a critical and objective mind; Mr. Walker, my secondary school ICT teacher, whose words of praise, encouragement and lament over my return to Mexico, I still turn to in times of need and desperation; Mrs. Burrow, Mrs. Milner and Miss Clarke, whose world-views and philosophies I have integrated into my own; and lastly, Mrs. Wade, for all her help when I arrived in a strange, grey land, and upon leaving a grey home.
+	
+	I also wish to thank \url{www.reddit.com}, \url{www.stackexchange.com} and \url{www.wikipedia.org}, whose communities freely provided me with tools, knowledge and support I could only have otherwise acquired by sinking more money and time into overpriced books, articles and further schooling.
+	
+	Next in line are my friends---who I have also come to consider my mentors. Namely, I would like to thank \emph{The Spectral League}, \emph{The Disciples}, PhD. Julio L. Palma Anda, and my Senseis Francisco ``Akira'' Espinoza Mancera, Kieth Prole and Sacha Martin-Luther King. The reasons for their appearance here are as varied as they are, but the one thing they all have in common, is that they have bestowed upon me the tools and responsibility to continually improve myself.
+	
+	And last but certainly not least, my family. And as I have mentioned before, my definition of family is not the traditional definition concerning an arbitrarily defined amount of shared genetic material; but rather that which is given in Disney's \emph{Lilo and Stitch}: ``Ohana means family. Family means nobody gets left behind, or forgotten.'' It is to these people, who have never left my side---or my mind---that I owe the greatest, most heartfelt of thanks. I would name them all, but there is no need, for they instinctively know who they are. I thank you all for making me the person I am\ldots~I hope you've made yourselves proud.
+	\vspace{\fill}
+%------------Dedication------------%
+\newpage
+\begin{center}
+	{\Large\bf{DEDICATION}}
+	
+	\vspace{\fill}	
+	To my Ohana.
+	\vspace{\fill}
+\end{center}
+%-------------Indexes--------------%
+\newpage
+\tableofcontents
+\newpage
+\listoftables
+\addcontentsline{toc}{chapter}{Table index \hfill}
+\listoffigures
+\addcontentsline{toc}{chapter}{Figure index \hfill}
+\newpage
+\setcounter{page}{1}
+%-------------Content--------------%
+\pagenumbering{arabic}
+%----------Introduction------------%
+\include{int}
+%-----------Methodology------------%
+\include{met}
+%-------------Results--------------%
+\include{res}
+%------------Conclusion------------%
+\include{conc}
+\setcounter{originalpagenumber}{\number\value{page}} % Save page number for bibliography
+%------------Appendix--------------%
+\include{appendix}
+\pagenumbering{arabic} % Back to arabic numbering where it left off.
+\setcounter{page}{\number\value{originalpagenumber}}
+%-----------References-------------%
+\bibliographystyle{IEEEtran}
+\bibliography{thesis}
+\end{document}
