@@ -1,0 +1,235 @@
+program main
+  use functions, only : init_random_seed
+  implicit none
+  call init_random_seed()
+  call dc_data_collection
+end program main
+subroutine dc_data_collection
+integer, parameter :: n = 1, es = 2 ! n = nucleus, es = electronic states
+! avgnumt, avgnumr = average numerator for transmission and reflection respectively
+! denom = denominator; ip = initial momentum
+double precision avgnumt(es), avgnumr(es), denom, ip, avgenergy
+double precision adjuster ! Adjusting the ip step.
+! Time stamps
+double precision days, hours, minutes, seconds, start, finish
+integer counter
+!CALL CPU_TIME(start)
+!open(unit=1, file='dc_prob.dat')
+!write(1,*) "# h = 1/(0.0125*ip), mc_steps = 15000, gamma = 0.366, initial state = 2"
+!write(1,*) "# Average Initial Energy ", "R 1<-2  ", "R 2<-2  ", "T 1<-2  ", "T 2<-2  "
+ip = 20.0
+!Initial ones.
+call dc_mc_avg(avgnumr,avgnumt,denom,ip,avgenergy,n,es)
+!write(1,*) log(avgenergy), avgnumr(1)/denom, avgnumr(2)/denom, avgnumt(1)/denom, avgnumt(2)/denom
+!write(1,*) log(ip**2.0/4000.0), avgnumr(1)/denom, avgnumr(2)/denom, avgnumt(1)/denom, avgnumt(2)/denom
+
+!do while(ip < 105.0)
+!   ip = ip + 2.0*adjuster
+!   call dc_mc_avg(avgnumr,avgnumt,denom,ip,avgenergy,n,es)
+!   write(1,*) log(avgenergy), avgnumr(1)/denom, avgnumr(2)/denom, avgnumt(1)/denom, avgnumt(2)/denom
+   !write(1,*) log(ip**2.0/4000.0), avgnumr(1)/denom, avgnumr(2)/denom, avgnumt(1)/denom, avgnumt(2)/denom
+!   adjuster = adjuster + 0.08
+!end do
+
+!CALL CPU_TIME(finish)
+!seconds = finish-start
+!days = floor(seconds/86400)
+!hours = floor(seconds/3600.0)
+!minutes = floor(mod(seconds/60.0,60.0))
+!seconds = mod(seconds,60.0)
+!write(1,*) '# Execution Time:'
+!write(1,*) '# days = ', days, 'hrs = ', hours, 'min = ', minutes, 's = ', seconds
+end subroutine dc_data_collection
+
+subroutine dc_mc_avg(avgnumr,avgnumt,denom,ip,avgenergy,n,es)
+implicit none
+integer n, es
+integer i, run, maxrun
+double precision numt(es), numr(es), avgnumt(es), avgnumr(es), denom, ip, energy, avgenergy
+! Initialising variables
+denom     = 0.0
+avgenergy = 0.0
+energy    = 0.0
+do concurrent (i = 1: es)
+   avgnumt(i) = 0.0
+   avgnumr(i) = 0.0
+end do
+
+! Parameters
+maxrun = 1
+do concurrent (run = 1: maxrun)
+   call dc(ip,numt,numr,energy,n,es)
+   ! Summing numerators. Only those corresponding to the final state will change.
+   do concurrent (i = 1: es)
+      avgnumt(i) = avgnumt(i) + numt(i)
+      avgnumr(i) = avgnumr(i) + numr(i)
+   end do
+   avgenergy = avgenergy + energy
+end do
+avgenergy = avgenergy/maxrun
+
+do concurrent (i = 1: es)
+   avgnumt(i) = avgnumt(i)/maxrun
+   avgnumr(i) = avgnumr(i)/maxrun
+   denom      = denom + avgnumt(i) + avgnumr(i)
+end do
+end subroutine dc_mc_avg
+
+subroutine dc(ip, numt, numr, energy, n, es)
+use functions, only : heaviside, kdelta, rk4gn!, init_random_seed
+implicit none
+double precision, parameter :: pi = 4.0*atan(1.0)
+integer n, es ! Parameters
+integer i, j ! Counters.
+integer reflection ! Flags 1 = yes, 0 = no.
+integer statei, statef, k ! E state related.
+double precision ti, tf, dt, dumrmin, rmin, rmax, gamma, dsn ! Adjustment parameters.
+double precision bni(es), bnf(es), sni(es), snf(es), q(es), rnd(es) ! E state related
+double precision numt(es), numr(es), arg, wi(es), wf(es) ! MC Average.
+! There are two coordinates per nucleus.
+! There are two coordinates per electronic state.
+! xi() = system's generalised coordinates.
+double precision xi(2*(n+es)), xf(2*(n+es)), ip, energy ! Variables.
+double precision numdum
+external dc_eq ! Single crossing Hamilton's eqs.
+100 continue ! We return after an unsuccessful attempt.
+! Initialising variables.
+reflection = 0
+gamma      = 0.366!(sqrt(3.0)-1.0)/2.0
+dsn        = 2.0*gamma
+arg        = 0.0
+j          = 0
+statef     = 0
+numdum     = 1.0
+do concurrent (k = 1: es)
+   numt(k) = 0.0
+   numr(k) = 0.0
+   wi(k)   = 0.0
+   wf(k)   = 0.0
+end do
+
+! Parameters.
+ti      = 0.0
+dt      = 1.0/(5.0*ip)
+rmin    = -8.0
+rmax    = 8.0
+statei  = 2
+dumrmin = rmin
+
+! Action variables.
+!call init_random_seed()
+do k = 1, es
+   call random_number(rnd)
+   bni(k) = kdelta(statei,k)
+   sni(k) = bni(k) + gamma*(2.0*rnd(1)-1.0)
+   q(k)   = 2.0*pi*rnd(2)
+   arg    = gamma-abs(sni(k)-bni(k))
+   wi(k)  = heaviside(arg)/dsn
+end do
+
+! Initial cartesian variables
+xi(1) = rmin ! Position
+xi(2) = ip   ! Momentum
+xi(3) = sqrt(2.0*(sni(1)+gamma))*cos(q(1))  ! x1
+xi(4) = -sqrt(2.0*(sni(1)+gamma))*sin(q(1)) ! p1
+xi(5) = sqrt(2.0*(sni(2)+gamma))*cos(q(2))  ! x2
+xi(6) = -sqrt(2.0*(sni(2)+gamma))*sin(q(2)) ! p2
+
+energy = xi(2)**2.0/4000.0 + 0.5*(-0.1*exp(-0.28*xi(1)**2.0)+0.05)&
+        +0.25*(xi(3)**2.0+xi(4)**2.0-xi(5)**2.0-xi(6)**2.0)&
+        *(0.1*exp(-0.28*xi(1)**2.0)-0.05)+(xi(4)*xi(6)+xi(3)*xi(5))&
+        *0.015*exp(-0.06*xi(1)**2.0)
+
+! Integrate hamilton's equations
+open(unit=1,file='dc_traj_.dat')
+write(1,*) ti, xi(1), xi(2), xi(3)**2.0/2.0 + xi(4)**2.0/2.0, xi(5)**2.0/2.0 + xi(6)**2.0/2.0
+do while(dumrmin<=rmax)!(ti<40000)
+   tf = ti + dt
+   call rk4gn(dc_eq,ti,tf,xi,xf,2*(n+es))
+   ! Check if the particle was reflected back.
+   dumrmin = xf(1)
+   if(dumrmin .le. rmin) then
+      reflection = 1
+      exit
+   end if
+   ti = tf
+   do concurrent (i = 1: 2*(n+es))
+      xi(i) = xf(i)
+   end do
+   write(1,*) ti, xi(1), xi(2), xi(3)**2.0/2.0 + xi(4)**2.0/2.0, xi(5)**2.0/2.0 + xi(6)**2.0/2.0
+end do
+
+! Calculating nk(t).
+do concurrent (k = 1: es)
+   snf(k) = 0.5*xf(es+k+j)**2.0 + 0.5*xf(es+k+1+j)**2.0
+   j      = j + 1
+end do
+
+if(1.0 .le. snf(1) .and. snf(1) .le. 1.0 + dsn .and. 0.0 .le. snf(2) .and. snf(2) .le. dsn) then
+   statef  = 1
+else if(0.0 .le. snf(1) .and. snf(1) .le. dsn .and. 1.0 .le. snf(2) .and. snf(2) .le. 1.0 + dsn) then
+   statef  = 2
+else
+   ! Well, go to 100 (the start of the subroutine) seemed to do the trick...
+   CLOSE ( 1, STATUS='DELETE', IOSTAT=I )
+   go to 100
+end if
+
+do k = 1, es
+   bnf(k) = kdelta(statef,k)
+   arg    = gamma - abs(snf(k)-bnf(k))
+   wf(k)  = heaviside(arg)/dsn
+end do
+
+if(reflection .eq. 0) then
+   do concurrent (k = 1: es)
+      numdum = numdum*wi(k)*wf(k)
+   end do
+   ! Only the numerator which corresponds to the final state will change, the other will remain equal to 0.0
+   numt(statef) = numdum
+   numdum       = 1.0
+! Check for reflection.
+else
+   do concurrent (k = 1: es)
+      numdum = numdum*wi(k)*wf(k)
+   end do
+   ! Only the numerator which corresponds to the final state will change, the other will remain equal to 0.0
+   numr(statef) = numdum
+   numdum       = 1.0
+end if
+end subroutine dc
+
+subroutine dc_eq(t,x,dx,n)
+!==========================================================!
+! Equations of motion of single avoided crossing           !
+! Daniel Celis Garza 21-22 Jan 2015                        !
+!----------------------------------------------------------!
+! x(1) = R     dx(1) = dR/dt                               !
+! x(2) = P     dx(2) = dP/dt                               !
+! x(3) = x1    dx(3) = dx1/dt                              !
+! x(4) = p1    dx(4) = dp1/dt                              !
+! x(5) = x2    dx(5) = dx2/dt                              !
+! x(6) = p2    dx(6) = dp2/dt                              !
+!==========================================================!
+implicit none
+integer n
+double precision t, x(n), dx(n), a, b, c, d, eo, mu
+double precision c1, c2, c3
+a  = 0.1
+b  = 0.28
+c  = 0.015
+d  = 0.06
+eo = 0.05
+mu = 2000.0
+c1 = c*exp(-d*x(1)**2.0)
+c2 = a*exp(-b*x(1)**2.0)
+c3 = 0.5*(c2-eo)
+
+dx(1) = x(2)/mu    ! Rdot
+dx(2) = x(1)*(2.0*d*c1*(x(4)*x(6)+x(3)*x(5))&
+        +b*c2*(0.5*(x(3)**2.0+x(4)**2.0-x(5)**2.0-x(6)**2.0)-1)) ! Pdot
+dx(3) = c3*x(4)+c1*x(6)  !x1dot
+dx(4) = -c3*x(3)-c1*x(5) !p1dot
+dx(5) = c1*x(4)-c3*x(6)  !x2dot
+dx(6) = c3*x(5)-c1*x(3)  !p2dot
+end subroutine dc_eq
